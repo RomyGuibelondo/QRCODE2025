@@ -1,0 +1,153 @@
+<!-- @format -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart QR Generator</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f3f4f6;
+        margin: 0;
+        padding: 2rem;
+      }
+      input {
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        max-width: 300px;
+        width: 100%;
+      }
+      .qr-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        justify-content: center;
+      }
+      button {
+        padding: 8px 16px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s ease;
+      }
+      button:hover {
+        background-color: #388e3c;
+      }
+      .qr-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+      h2 {
+        text-align: center;
+        color: #333;
+      }
+      .qr-card {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 160px;
+      }
+      .qr-text {
+        color: #4caf50;
+        font-weight: bold;
+        margin-top: 0.5rem;
+        word-wrap: break-word;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Smart QR Code Generator</h2>
+    <div class="qr-container">
+      <input type="text" id="qrInput" placeholder="Enter word or number" />
+      <button onclick="generateQRs(1)">+1</button>
+      <button onclick="generateQRs(10)">+10</button>
+    </div>
+
+    <div class="qr-grid" id="qrDisplay"></div>
+
+    <script>
+      function generateQRs(count) {
+        let input = document.getElementById("qrInput").value.trim();
+        if (!input) {
+          alert("Please enter a value");
+          return;
+        }
+
+        const qrDisplay = document.getElementById("qrDisplay");
+        qrDisplay.innerHTML = "";
+
+        let current = input;
+
+        for (let i = 0; i < count; i++) {
+          const qrUrl =
+            "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+            encodeURIComponent(current);
+
+          const card = document.createElement("div");
+          card.className = "qr-card";
+
+          const img = document.createElement("img");
+          img.src = qrUrl;
+          img.alt = current;
+
+          const label = document.createElement("div");
+          label.className = "qr-text";
+          label.innerText = current;
+
+          card.appendChild(img);
+          card.appendChild(label);
+          qrDisplay.appendChild(card);
+
+          current = getNextValue(current);
+        }
+
+        document.getElementById("qrInput").value = current;
+      }
+
+      function getNextValue(input) {
+        const match = input.match(/(.*?)([a-zA-Z]+|\d+)$/);
+        if (!match) return input + "1";
+
+        const prefix = match[1];
+        const lastPart = match[2];
+
+        if (/^\d+$/.test(lastPart)) {
+          // Number increment
+          return prefix + (parseInt(lastPart, 10) + 1);
+        } else {
+          // Word increment
+          return prefix + incrementString(lastPart);
+        }
+      }
+
+      function incrementString(str) {
+        let arr = str.toLowerCase().split("");
+        let i = arr.length - 1;
+
+        while (i >= 0) {
+          if (arr[i] === "z") {
+            arr[i] = "a";
+            i--;
+          } else {
+            arr[i] = String.fromCharCode(arr[i].charCodeAt(0) + 1);
+            return arr.join("");
+          }
+        }
+
+        // If all were z, add new 'a' in front
+        return "a" + arr.join("");
+      }
+    </script>
+  </body>
+</html>
