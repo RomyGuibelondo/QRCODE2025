@@ -6,6 +6,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart QR Generator</title>
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
       body {
         font-family: sans-serif;
@@ -26,6 +30,7 @@
         gap: 1rem;
         margin-bottom: 1.5rem;
         justify-content: center;
+        flex-wrap: wrap;
       }
       button {
         padding: 8px 16px;
@@ -45,6 +50,7 @@
         flex-wrap: wrap;
         gap: 1rem;
         margin-top: 2rem;
+        justify-content: center;
       }
       h2 {
         text-align: center;
@@ -64,28 +70,74 @@
         margin-top: 0.5rem;
         word-wrap: break-word;
       }
+      label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+      }
+      .utility-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+      }
+
+      @media print {
+        .qr-container,
+        .utility-buttons {
+          display: none;
+        }
+        body {
+          padding: 1rem;
+        }
+        .qr-card {
+          box-shadow: none;
+        }
+      }
     </style>
   </head>
   <body>
     <h2>Smart QR Code Generator</h2>
+
     <div class="qr-container">
-      <input type="text" id="qrInput" placeholder="Enter word or number" />
+      <input
+        type="text"
+        id="qrInput"
+        placeholder="Enter word or number"
+        maxlength="50"
+      />
       <button onclick="generateQRs(1)">+1</button>
       <button onclick="generateQRs(10)">+10</button>
+      <button onclick="generateRandom()">🎲 Random</button>
+      <label>
+        <input type="checkbox" id="appendMode" />
+        Append mode
+      </label>
+    </div>
+
+    <div class="utility-buttons">
+      <button onclick="downloadAllAsZip()">📦 Save as ZIP</button>
+      <button onclick="exportToPDF()">📄 Export PDF</button>
+      <button onclick="window.print()">🖨️ Print</button>
     </div>
 
     <div class="qr-grid" id="qrDisplay"></div>
 
     <script>
       function generateQRs(count) {
-        let input = document.getElementById("qrInput").value.trim();
+        const inputField = document.getElementById("qrInput");
+        let input = inputField.value.trim();
         if (!input) {
           alert("Please enter a value");
           return;
         }
 
         const qrDisplay = document.getElementById("qrDisplay");
-        qrDisplay.innerHTML = "";
+        const append = document.getElementById("appendMode").checked;
+
+        if (!append) qrDisplay.innerHTML = "";
 
         let current = input;
 
@@ -99,7 +151,15 @@
 
           const img = document.createElement("img");
           img.src = qrUrl;
-          img.alt = current;
+          img.alt = `QR code for ${current}`;
+          img.style.cursor = "pointer";
+
+          img.onclick = () => {
+            const a = document.createElement("a");
+            a.href = img.src;
+            a.download = `${current}.png`;
+            a.click();
+          };
 
           const label = document.createElement("div");
           label.className = "qr-text";
@@ -112,7 +172,7 @@
           current = getNextValue(current);
         }
 
-        document.getElementById("qrInput").value = current;
+        inputField.value = current;
       }
 
       function getNextValue(input) {
@@ -123,10 +183,13 @@
         const lastPart = match[2];
 
         if (/^\d+$/.test(lastPart)) {
-          // Number increment
-          return prefix + (parseInt(lastPart, 10) + 1);
+          return (
+            prefix +
+            (parseInt(lastPart, 10) + 1)
+              .toString()
+              .padStart(lastPart.length, "0")
+          );
         } else {
-          // Word increment
           return prefix + incrementString(lastPart);
         }
       }
@@ -145,8 +208,46 @@
           }
         }
 
-        // If all were z, add new 'a' in front
         return "a" + arr.join("");
+      }
+
+      function generateRandom() {
+        const length = 16;
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let result = "";
+        for (let i = 0; i < length; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById("qrInput").value = result;
+      }
+
+      async function downloadAllAsZip() {
+        const zip = new JSZip();
+        const cards = document.querySelectorAll(".qr-card");
+        if (!cards.length) return alert("No QR codes to save.");
+
+        for (let card of cards) {
+          const img = card.querySelector("img");
+          const label = card.querySelector(".qr-text").innerText;
+          const blob = await fetch(img.src).then((res) => res.blob());
+          zip.file(`${label}.png`, blob);
+        }
+
+        zip.generateAsync({ type: "blob" }).then(function (content) {
+          saveAs(content, "qr_codes.zip");
+        });
+      }
+
+      function exportToPDF() {
+        const qrArea = document.getElementById("qrDisplay");
+        const opt = {
+          margin: 0.3,
+          filename: "qr_codes.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+        };
+        html2pdf().set(opt).from(qrArea).save();
       }
     </script>
   </body>
