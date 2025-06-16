@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#4caf50" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart QR Generator</title>
@@ -122,7 +124,6 @@
       <button onclick="exportToPDF()">📄 Export PDF</button>
       <button onclick="window.print()">🖨️ Print</button>
     </div>
-
     <div class="qr-container">
       <textarea
         id="bulkInput"
@@ -135,55 +136,6 @@
     <div class="qr-grid" id="qrDisplay"></div>
 
     <script>
-      function generateBulkQRs() {
-        const bulkText = document.getElementById("bulkInput").value.trim();
-        const append = document.getElementById("appendMode").checked;
-        const qrDisplay = document.getElementById("qrDisplay");
-
-        if (!bulkText) {
-          alert("Please enter one or more values.");
-          return;
-        }
-
-        if (!append) qrDisplay.innerHTML = "";
-
-        const lines = bulkText
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean);
-
-        lines.forEach((line) => {
-          const qrUrl =
-            "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
-            encodeURIComponent(line);
-
-          const card = document.createElement("div");
-          card.className = "qr-card";
-
-          const img = document.createElement("img");
-          img.src = qrUrl;
-          img.alt = `QR code for ${line}`;
-          img.style.cursor = "pointer";
-
-          img.onclick = () => {
-            const a = document.createElement("a");
-            a.href = img.src;
-            a.download = `${line}.png`;
-            a.click();
-          };
-
-          const label = document.createElement("div");
-          label.className = "qr-text";
-          label.innerText = line;
-
-          card.appendChild(img);
-          card.appendChild(label);
-          qrDisplay.appendChild(card);
-        });
-
-        document.getElementById("bulkInput").value = "";
-      }
-
       function generateQRs(count) {
         const inputField = document.getElementById("qrInput");
         let input = inputField.value.trim();
@@ -306,6 +258,64 @@
           jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
         };
         html2pdf().set(opt).from(qrArea).save();
+      }
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker
+            .register("sw.js")
+            .then((reg) => console.log("Service Worker registered:", reg.scope))
+            .catch((err) =>
+              console.log("Service Worker registration failed:", err)
+            );
+        });
+      }
+      function generateBulkQRs() {
+        const bulkText = document.getElementById("bulkInput").value.trim();
+        const append = document.getElementById("appendMode").checked;
+        const qrDisplay = document.getElementById("qrDisplay");
+
+        if (!bulkText) {
+          alert("Please enter one or more values.");
+          return;
+        }
+
+        if (!append) qrDisplay.innerHTML = "";
+
+        const lines = bulkText
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        lines.forEach((line) => {
+          const qrUrl =
+            "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+            encodeURIComponent(line);
+
+          const card = document.createElement("div");
+          card.className = "qr-card";
+
+          const img = document.createElement("img");
+          img.src = qrUrl;
+          img.alt = `QR code for ${line}`;
+          img.style.cursor = "pointer";
+
+          img.onclick = () => {
+            const a = document.createElement("a");
+            a.href = img.src;
+            a.download = `${line}.png`;
+            a.click();
+          };
+
+          const label = document.createElement("div");
+          label.className = "qr-text";
+          label.innerText = line;
+
+          card.appendChild(img);
+          card.appendChild(label);
+          qrDisplay.appendChild(card);
+        });
+
+        document.getElementById("bulkInput").value = "";
       }
     </script>
   </body>
