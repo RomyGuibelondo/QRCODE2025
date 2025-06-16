@@ -123,9 +123,67 @@
       <button onclick="window.print()">🖨️ Print</button>
     </div>
 
+    <div class="qr-container">
+      <textarea
+        id="bulkInput"
+        placeholder="Enter multiple values, one per line"
+        rows="5"
+        style="width: 100%; max-width: 300px; margin-top: 1rem"
+      ></textarea>
+      <button onclick="generateBulkQRs()">📘 Generate Bulk</button>
+    </div>
     <div class="qr-grid" id="qrDisplay"></div>
 
     <script>
+      function generateBulkQRs() {
+        const bulkText = document.getElementById("bulkInput").value.trim();
+        const append = document.getElementById("appendMode").checked;
+        const qrDisplay = document.getElementById("qrDisplay");
+
+        if (!bulkText) {
+          alert("Please enter one or more values.");
+          return;
+        }
+
+        if (!append) qrDisplay.innerHTML = "";
+
+        const lines = bulkText
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        lines.forEach((line) => {
+          const qrUrl =
+            "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" +
+            encodeURIComponent(line);
+
+          const card = document.createElement("div");
+          card.className = "qr-card";
+
+          const img = document.createElement("img");
+          img.src = qrUrl;
+          img.alt = `QR code for ${line}`;
+          img.style.cursor = "pointer";
+
+          img.onclick = () => {
+            const a = document.createElement("a");
+            a.href = img.src;
+            a.download = `${line}.png`;
+            a.click();
+          };
+
+          const label = document.createElement("div");
+          label.className = "qr-text";
+          label.innerText = line;
+
+          card.appendChild(img);
+          card.appendChild(label);
+          qrDisplay.appendChild(card);
+        });
+
+        document.getElementById("bulkInput").value = "";
+      }
+
       function generateQRs(count) {
         const inputField = document.getElementById("qrInput");
         let input = inputField.value.trim();
