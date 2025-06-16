@@ -118,12 +118,6 @@
         Append mode
       </label>
     </div>
-
-    <div class="utility-buttons">
-      <button onclick="downloadAllAsZip()">📦 Save as ZIP</button>
-      <button onclick="exportToPDF()">📄 Export PDF</button>
-      <button onclick="window.print()">🖨️ Print</button>
-    </div>
     <div class="qr-container">
       <textarea
         id="bulkInput"
@@ -133,8 +127,12 @@
       ></textarea>
       <button onclick="generateBulkQRs()">📘 Generate Bulk</button>
     </div>
+    <div class="utility-buttons">
+      <button onclick="downloadAllAsZip()">📦 Save as ZIP</button>
+      <button onclick="exportToPDF()">📄 Export PDF</button>
+      <button onclick="window.print()">🖨️ Print</button>
+    </div>
     <div class="qr-grid" id="qrDisplay"></div>
-
     <script>
       function generateQRs(count) {
         const inputField = document.getElementById("qrInput");
